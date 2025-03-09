@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#A1A1A1"/> <!-- Background color (matches your tint) -->
+    <corners android:radius="36dp"/>  <!-- Corner radius (matches your MaterialButton) -->
+</shape>
