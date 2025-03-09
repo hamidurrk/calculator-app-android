@@ -7,6 +7,67 @@
     android:layout_height="match_parent"
     android:background="@color/black"
     tools:context=".MainActivity">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/result_tv">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_vertical"
+            android:paddingVertical="16dp">
+            <EditText
+                android:id="@+id/input_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginBottom="24dp"
+                android:focusableInTouchMode="true"
+                android:hint="Enter first number"
+                android:inputType="numberDecimal"
+                android:textAlignment="textStart"
+                android:textColor="@color/white"
+                android:textColorHint="#a1a1a1"
+                android:textSize="28sp"
+                android:cursorVisible="false"
+                android:paddingBottom="4dp"
+                android:background="@drawable/edit_text_bg" />
+
+            <EditText
+                android:id="@+id/input_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:layout_marginHorizontal="24dp"
+                android:focusableInTouchMode="true"
+                android:hint="Enter second number"
+                android:inputType="numberDecimal"
+                android:textAlignment="textStart"
+                android:textColor="@color/white"
+                android:textColorHint="#a1a1a1"
+                android:textSize="28sp"
+                android:cursorVisible="false"
+                android:paddingBottom="4dp"
+                android:background="@drawable/edit_text_bg" />
+        </LinearLayout>
+    </LinearLayout>
+
+
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/result_tv"
+        android:text="0"
+        android:textSize="64sp"
+        android:textColor="@color/white"
+        android:textAlignment="textEnd"
+        android:layout_above="@+id/buttons_layout"
+        android:layout_marginHorizontal="24dp"
+        />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -28,7 +89,7 @@
                 android:layout_height="72dp"
                 app:cornerRadius="36dp"
                 style="@style/Widget.MaterialComponents.ExtendedFloatingActionButton"
-                android:textSize="32sp"
+                android:textSize="36sp"
                 android:textColor="@color/black"
                 android:layout_margin="12dp"
                 android:text="+"
@@ -40,37 +101,32 @@
                 android:layout_height="72dp"
                 app:cornerRadius="36dp"
                 style="@style/Widget.MaterialComponents.ExtendedFloatingActionButton"
-                android:textSize="32sp"
+                android:textSize="28sp"
                 android:textColor="@color/black"
                 android:layout_margin="12dp"
-                android:text="-"
+                android:text="—"
                 android:id="@+id/b_sub"
                 android:backgroundTint="#56AAAA"
                 />
-            <com.google.android.material.button.MaterialButton
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                app:cornerRadius="36dp"
-                style="@style/Widget.MaterialComponents.ExtendedFloatingActionButton"
-                android:textSize="32sp"
-                android:textColor="@color/black"
-                android:layout_margin="12dp"
-                android:text="X"
+
+            <ImageButton
                 android:id="@+id/b_mul"
-                android:backgroundTint="#56AAAA"
-                />
-            <com.google.android.material.button.MaterialButton
                 android:layout_width="72dp"
                 android:layout_height="72dp"
-                app:cornerRadius="36dp"
-                style="@style/Widget.MaterialComponents.ExtendedFloatingActionButton"
-                android:textSize="32sp"
-                android:textColor="@color/black"
                 android:layout_margin="12dp"
-                android:text="/"
+                android:background="@drawable/rounded_operations_button_background"
+
+                android:src="@drawable/multiply"
+                android:scaleType="centerInside"/>
+
+            <ImageButton
                 android:id="@+id/b_div"
-                android:backgroundTint="#56AAAA"
-                />
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_margin="12dp"
+                android:background="@drawable/rounded_operations_button_background"
+                android:src="@drawable/divide"
+                android:scaleType="centerInside" />
 
         </LinearLayout>
         <LinearLayout
@@ -179,14 +235,16 @@
 <!--                android:id="@+id/b_flip"-->
 <!--                android:backgroundTint="#A1A1A1"-->
 <!--                />-->
+
             <ImageButton
-                android:id="@+id/b_flip"
+                android:id="@+id/b_down"
                 android:layout_width="72dp"
                 android:layout_height="72dp"
                 android:layout_margin="12dp"
                 android:background="@drawable/rounded_button_background"
-                android:src="@drawable/arrows"
-                android:scaleType="centerInside"/>
+                android:src="@drawable/down"
+                android:scaleType="centerInside" />
+
 
         </LinearLayout>
         <LinearLayout
@@ -245,12 +303,12 @@
 <!--                />-->
 
             <ImageButton
-                android:id="@+id/b_down"
+                android:id="@+id/b_flip"
                 android:layout_width="72dp"
                 android:layout_height="72dp"
                 android:layout_margin="12dp"
                 android:background="@drawable/rounded_button_background"
-                android:src="@drawable/down"
+                android:src="@drawable/arrows"
                 android:scaleType="centerInside"/>
 
         </LinearLayout>
@@ -270,7 +328,7 @@
                 android:layout_margin="12dp"
                 android:text="AC"
                 android:id="@+id/b_ac"
-                android:backgroundTint="#F44336"
+                android:backgroundTint="#9B101E"
                 />
             <com.google.android.material.button.MaterialButton
                 android:layout_width="72dp"
@@ -306,9 +364,10 @@
                 android:layout_margin="12dp"
                 android:text="C"
                 android:id="@+id/b_c"
-                android:backgroundTint="#F44336"
+                android:backgroundTint="#9B101E"
                 />
 
         </LinearLayout>
     </LinearLayout>
+
 </RelativeLayout>
