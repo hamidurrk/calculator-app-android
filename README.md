@@ -4,6 +4,10 @@
 
 This is a simple, user-friendly Android calculator app designed to perform basic arithmetic operations. It provides a clean and intuitive interface for adding, subtracting, multiplying, and dividing numbers. The app also includes several quality-of-life features to enhance the user experience.
 
+## Demonstration Video
+
+https://drive.google.com/file/d/1ef5FBn7xqBKp078hUdZoVlhhjhThzKXZ/view?usp=sharing
+
 ## Features
 
 *   **Basic Arithmetic Operations:**
