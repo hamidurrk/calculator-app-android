@@ -17,6 +17,7 @@ import android.os.Looper;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.ActionMode;
 import android.view.Gravity;
 import android.view.Menu;
@@ -166,7 +167,6 @@ public class MainActivity extends AppCompatActivity {
         bMul.setOnClickListener(v -> changeOperation("*"));
         bDiv.setOnClickListener(v -> changeOperation("/"));
 
-//        b_eq.setOnClickListener(v -> calculate());
         updateFocus();
         updateOperationUI();
         resultTv.setText("");
@@ -194,10 +194,11 @@ public class MainActivity extends AppCompatActivity {
 
         bDel.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                handler.post(deleteRunnable); // Start deleting
+                handler.post(deleteRunnable);
             } else if (event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL) {
-                handler.removeCallbacks(deleteRunnable); // Stop deleting
+                handler.removeCallbacks(deleteRunnable);
             }
+            updateResult();
             return true;
         });
         bAllClear.setOnClickListener(v -> {
@@ -320,47 +321,62 @@ public class MainActivity extends AppCompatActivity {
         String text2 = input2.getText().toString();
         boolean isText1Valid = true;
         boolean isText2Valid = true;
+        boolean isText1OperationValid = true;
+        boolean isText2OperationValid = true;
 
         try {
             if (!text1.isEmpty()){
                 if (!(text1.charAt(0) == '-' && text1.length() == 1)) {
                     Double.parseDouble(text1);
+                } else{
+                    isText1Valid = false;
                 }
             }
         } catch (NumberFormatException e) {
             isText1Valid = false;
+            isText1OperationValid = false;
         }
         try {
             if (!text2.isEmpty()){
                 if (!(text2.charAt(0) == '-' && text2.length() == 1)) {
                     Double.parseDouble(text2);
+                } else{
+                    isText2Valid = false;
                 }
             }
         } catch (NumberFormatException e) {
             isText2Valid = false;
+            isText2OperationValid = false;
         }
         if (!isText1Valid && !isText2Valid){
-            resultTv.setText("Invalid");
-            input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
-            input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
-            return false;
+            if (!isText2OperationValid && !isText1OperationValid) {
+                resultTv.setText("Invalid");
+                input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
+                input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
+                return false;
+            }
         }
         if (!isText1Valid) {
-            resultTv.setText("Invalid");
-            input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
-            input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
-            return false;
+            if (!isText1OperationValid) {
+                resultTv.setText("Invalid");
+                input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
+                input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
+                return false;
+            }
         }
         if (!isText2Valid) {
-            resultTv.setText("Invalid");
-            input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
-            input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
-            return false;
+            if (!isText2OperationValid) {
+                resultTv.setText("Invalid");
+                input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
+                input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
+                return false;
+            }
         }
         input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
         input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
         resultTv.setText("");
         return true;
+
     }
 
     public void updateResult() {
@@ -444,37 +460,38 @@ public class MainActivity extends AppCompatActivity {
             List<Instruction> instructions = new ArrayList<>();
 //            instructions.add(new Instruction(input1, "Enter the first number here"));
 //            instructions.add(new Instruction(input2, "Enter the second number here"));
-            instructions.add(new Instruction(bAdd, "Tap here to add numbers"));
-            instructions.add(new Instruction(bSub, "Tap here to substract numbers"));
-            instructions.add(new Instruction(bMul, "Tap here to multiply numbers"));
-            instructions.add(new Instruction(bDiv, "Tap here to divide numbers"));
-            instructions.add(new Instruction(bDel, "Long press here to delete numbers"));
-            instructions.add(new Instruction(bAllClear, "Tap here to clear all numbers"));
-            instructions.add(new Instruction(bNeg, "Tap here to enter a negative sign"));
-            instructions.add(new Instruction(bDown, "Tap here to move focus to the other input field\n(Down Arrow)"));
-            instructions.add(new Instruction(bFlip, "Tap here to swap the numbers"));
+            instructions.add(new Instruction(bAdd, "Add numbers"));
+            instructions.add(new Instruction(bAdd, "Add numbers"));
+            instructions.add(new Instruction(bSub, "Subtract numbers"));
+            instructions.add(new Instruction(bMul, "Multiply numbers"));
+            instructions.add(new Instruction(bDiv, "Divide numbers"));
+            instructions.add(new Instruction(bDel, "Delete numbers"));
+            instructions.add(new Instruction(bAllClear, "Clear all numbers"));
+            instructions.add(new Instruction(bNeg, "Enter a negative sign"));
+            instructions.add(new Instruction(bDown, "Move focus to the other input field\n(Down Arrow)"));
+            instructions.add(new Instruction(bFlip, "Swap the numbers"));
 
             final int[] currentInstructionIndex = {0};
 
-            Instruction firstInstruction = instructions.get(0);
-            root.post(() -> {
-                instructionsTextView.setText(firstInstruction.text);
-                highlightView(overlay, firstInstruction.view);
-                positionInstructionText(root, instructionsTextView, firstInstruction.view);
-            });
-
+            final boolean[] count = {true};
+            instructionsTextView.setText("Welcome to the Calculator App!");
             overlay.setOnClickListener(v -> {
-                currentInstructionIndex[0]++;
                 if (currentInstructionIndex[0] < instructions.size()) {
                     Instruction currentInstruction = instructions.get(currentInstructionIndex[0]);
+                    Log.d("Instruction", "Showing instruction: " + currentInstruction.text);
                     root.post(() -> {
                         instructionsTextView.setText(currentInstruction.text);
                         highlightView(overlay, currentInstruction.view);
                         positionInstructionText(root, instructionsTextView, currentInstruction.view);
+                        if (count[0]){
+                            overlay.performClick();
+                            count[0] = false;
+                        }
                     });
                 } else {
                     ((ViewGroup) root.getParent()).removeView(root);
                 }
+                currentInstructionIndex[0]++;
             });
         }
     }
@@ -489,7 +506,6 @@ public class MainActivity extends AppCompatActivity {
             int width = targetView.getWidth();
             int height = targetView.getHeight();
 
-            // Calculate position above the target
             int targetCenterX = x + width / 2;
             int instructionsTextViewWidth = instructionsTextView.getWidth();
             int instructionsTextViewHeight = instructionsTextView.getHeight();
