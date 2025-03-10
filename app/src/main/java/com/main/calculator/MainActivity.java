@@ -353,24 +353,36 @@ public class MainActivity extends AppCompatActivity {
                 resultTv.setText("Invalid");
                 input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
                 input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
-                return false;
+            } else if (resultTv.getText().equals("Invalid")){
+                resultTv.setText("");
+                input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
+                input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
             }
+            return false;
         }
         if (!isText1Valid) {
             if (!isText1OperationValid) {
                 resultTv.setText("Invalid");
                 input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
                 input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
-                return false;
+            } else if (resultTv.getText().equals("Invalid")){
+                resultTv.setText("");
+                input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
+                input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
             }
+                return false;
         }
         if (!isText2Valid) {
             if (!isText2OperationValid) {
                 resultTv.setText("Invalid");
                 input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
                 input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
-                return false;
+            } else if (resultTv.getText().equals("Invalid")){
+                resultTv.setText("");
+                input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
+                input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
             }
+                return false;
         }
         input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
         input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
