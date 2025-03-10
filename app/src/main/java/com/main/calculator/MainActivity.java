@@ -1,10 +1,17 @@
 package com.main.calculator;
 
+import android.annotation.SuppressLint;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.widget.EditText;
@@ -16,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 
 import java.text.DecimalFormat;
+import java.util.logging.LogRecord;
 
 public class MainActivity extends AppCompatActivity {
     EditText input1;
@@ -23,12 +31,37 @@ public class MainActivity extends AppCompatActivity {
     TextView resultTv;
     MaterialButton bAdd, bSub;
     ImageButton bMul, bDiv;
-    MaterialButton b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, bDot;
-    MaterialButton bClear, bAllClear;
+    MaterialButton b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, bDot, bNeg;
+    MaterialButton bAllClear;
     ImageButton bDel, bFlip, bDown;
     int inputCell;
     String operation;
 
+    private final TextWatcher textWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            evaluateInput();
+        }
+    };
+
+    private android.os.Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable deleteRunnable = new Runnable() {
+        @Override
+        public void run() {
+            delete();
+            handler.postDelayed(this, 200);
+        }
+    };
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,13 +82,14 @@ public class MainActivity extends AppCompatActivity {
         b8 = findViewById(R.id.b_8);
         b9 = findViewById(R.id.b_9);
         bDot = findViewById(R.id.b_dot);
+        bNeg = findViewById(R.id.b_neg);
         bAdd = findViewById(R.id.b_add);
         bSub = findViewById(R.id.b_sub);
         bMul = findViewById(R.id.b_mul);
         bDiv = findViewById(R.id.b_div);
 
         bAllClear = findViewById(R.id.b_ac);
-        bClear = findViewById(R.id.b_c);
+//        bClear = findViewById(R.id.b_c);
 
         bFlip = findViewById(R.id.b_flip);
         bDel = findViewById(R.id.b_del);
@@ -65,6 +99,39 @@ public class MainActivity extends AppCompatActivity {
 
         disableSoftInputFromAppearing(input1);
         disableSoftInputFromAppearing(input2);
+
+        input1.addTextChangedListener(textWatcher);
+        input2.addTextChangedListener(textWatcher);
+
+        input1.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                input1.setSelection(input1.getText().length());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        input2.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                input2.setSelection(input2.getText().length());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
 
         b0.setOnClickListener(v -> addNumber("0"));
         b1.setOnClickListener(v -> addNumber("1"));
@@ -77,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
         b8.setOnClickListener(v -> addNumber("8"));
         b9.setOnClickListener(v -> addNumber("9"));
         bDot.setOnClickListener(v -> addNumber("."));
+        bNeg.setOnClickListener(v -> addNumber("-"));
 
         bAdd.setOnClickListener(v -> changeOperation("+"));
         bSub.setOnClickListener(v -> changeOperation("-"));
@@ -85,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
 
 //        b_eq.setOnClickListener(v -> calculate());
         updateFocus();
+        updateOperationUI();
         resultTv.setText("");
 
         bDown.setOnClickListener(v -> {
@@ -92,26 +161,29 @@ public class MainActivity extends AppCompatActivity {
             updateFocus();
         });
 
-        input1.setOnClickListener(v -> {
-            inputCell = 1;
-            updateFocus();
-        });
-        input2.setOnClickListener(v -> {
-            inputCell = 2;
-            updateFocus();
+        input1.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                inputCell = 1;
+                updateFocus();
+            }
+            return true;
         });
 
-        bDel.setOnClickListener(v -> {
-            if (inputCell == 1) {
-                if (input1.getText().length() > 0) {
-                    input1.setText(input1.getText().toString().substring(0, input1.getText().length() - 1));
-                }
-            } else {
-                if (input2.getText().length() > 0) {
-                    input2.setText(input2.getText().toString().substring(0, input2.getText().length() - 1));
-                }
+        input2.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                inputCell = 2;
+                updateFocus();
             }
-            updateResult();
+            return true;
+        });
+
+        bDel.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                handler.post(deleteRunnable); // Start deleting
+            } else if (event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL) {
+                handler.removeCallbacks(deleteRunnable); // Stop deleting
+            }
+            return true;
         });
         bAllClear.setOnClickListener(v -> {
             input1.setText("");
@@ -120,14 +192,14 @@ public class MainActivity extends AppCompatActivity {
             inputCell = 1;
             updateFocus();
         });
-        bClear.setOnClickListener(v -> {
-            if (inputCell == 1) {
-                input1.setText("");
-            } else {
-                input2.setText("");
-            }
-            resultTv.setText("");
-        });
+//        bClear.setOnClickListener(v -> {
+//            if (inputCell == 1) {
+//                input1.setText("");
+//            } else {
+//                input2.setText("");
+//            }
+//            resultTv.setText("");
+//        });
         bFlip.setOnClickListener(v -> {
             String temp = input1.getText().toString();
             input1.setText(input2.getText().toString());
@@ -146,6 +218,23 @@ public class MainActivity extends AppCompatActivity {
             input2.requestFocus();
             input1.clearFocus();
         }
+    }
+
+    private void updateOperationUI() {
+        bAdd.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.teal)));
+        bSub.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.teal)));
+        bMul.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.teal)));
+        bDiv.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.teal)));
+        if (operation.equals("+")) {
+            bAdd.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange)));
+        } else if (operation.equals("-")) {
+            bSub.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange)));
+        } else if (operation.equals("*")) {
+            bMul.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange)));
+        } else if (operation.equals("/")) {
+            bDiv.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange)));
+        }
+
     }
 
     public void disableSoftInputFromAppearing(EditText editText) {
@@ -183,6 +272,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @SuppressLint("SetTextI18n")
     public void addNumber(String number) {
         if (inputCell == 1) {
             String currentText = input1.getText().toString();
@@ -196,27 +286,78 @@ public class MainActivity extends AppCompatActivity {
 
     public void changeOperation(String newOperation) {
         operation = newOperation;
+        updateOperationUI();
         updateResult();
+    }
+
+    private void delete() {
+        EditText focusedEditText = (inputCell == 1) ? input1 : input2;
+        int length = focusedEditText.getText().length();
+        if (length > 0) {
+            focusedEditText.getText().delete(length - 1, length);
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    public boolean evaluateInput() {
+        String text1 = input1.getText().toString();
+        String text2 = input2.getText().toString();
+        boolean isText1Valid = true;
+        boolean isText2Valid = true;
+
+        try {
+            if (!text1.isEmpty()){
+                if (!(text1.charAt(0) == '-' && text1.length() == 1)) {
+                    Double.parseDouble(text1);
+                }
+            }
+        } catch (NumberFormatException e) {
+            isText1Valid = false;
+        }
+        try {
+            if (!text2.isEmpty()){
+                if (!(text2.charAt(0) == '-' && text2.length() == 1)) {
+                    Double.parseDouble(text2);
+                }
+            }
+        } catch (NumberFormatException e) {
+            isText2Valid = false;
+        }
+        if (!isText1Valid && !isText2Valid){
+            resultTv.setText("Invalid");
+            input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
+            input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
+            return false;
+        }
+        if (!isText1Valid) {
+            resultTv.setText("Invalid");
+            input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
+            input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
+            return false;
+        }
+        if (!isText2Valid) {
+            resultTv.setText("Invalid");
+            input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.red)));
+            input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
+            return false;
+        }
+        input1.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
+        input2.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.white)));
+        resultTv.setText("");
+        return true;
     }
 
     public void updateResult() {
         String text1 = input1.getText().toString();
         String text2 = input2.getText().toString();
-        if (!text1.equals("") && !text2.equals("")) {
-            double number1 = Double.NaN;
-            try {
-                number1 = Double.parseDouble(text1);
-            } catch (NumberFormatException e) {
-                resultTv.setText("First number invalid");
+        if (!text1.isEmpty() && !text2.isEmpty()) {
+            if (!evaluateInput()){
                 return;
             }
-            double number2 = Double.NaN;
-            try {
-                number2 = Double.parseDouble(text2);
-            } catch (NumberFormatException e) {
-                resultTv.setText("Second number invalid");
-                return;
-            }
+
+            double number1 = Double.parseDouble(text1);
+            double number2 = Double.parseDouble(text2);
+
             double result = 0;
             switch (operation) {
                 case "+":
@@ -243,7 +384,9 @@ public class MainActivity extends AppCompatActivity {
 
             resultTv.setText(formattedResult);
         } else {
-            resultTv.setText("");
+            if (!resultTv.getText().equals("Invalid")){
+                resultTv.setText("");
+            }
         }
     }
 }
