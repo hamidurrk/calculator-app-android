@@ -1,7 +1,16 @@
 package com.main.calculator;
 
 import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -9,12 +18,16 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.ActionMode;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -23,6 +36,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.LogRecord;
 
 public class MainActivity extends AppCompatActivity {
@@ -208,6 +223,7 @@ public class MainActivity extends AppCompatActivity {
             inputCell = (inputCell == 1) ? 2 : 1;
             updateFocus();
         });
+        showInstructions();
     }
 
     private void updateFocus() {
@@ -389,4 +405,143 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    private boolean isFirstLaunch() {
+        SharedPreferences prefs = getSharedPreferences("prefs", MODE_PRIVATE);
+        boolean firstLaunch = prefs.getBoolean("firstLaunch", true);
+        if (firstLaunch) {
+            prefs.edit().putBoolean("firstLaunch", false).apply();
+        }
+        return firstLaunch;
+    }
+
+    private class Instruction {
+        View view;
+        String text;
+
+        Instruction(View view, String text) {
+            this.view = view;
+            this.text = text;
+        }
+    }
+
+    private void showInstructions() {
+        if (isFirstLaunch()) {
+            FrameLayout root = new FrameLayout(this);
+            addContentView(root, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+            View overlay = new View(this);
+            overlay.setBackgroundColor(0xFF000000);
+            root.addView(overlay, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+            TextView instructionsTextView = new TextView(this);
+            instructionsTextView.setTextColor(Color.WHITE);
+            instructionsTextView.setTextSize(20);
+            instructionsTextView.setPadding(32, 32, 32, 32);
+            instructionsTextView.setGravity(Gravity.CENTER);
+            root.addView(instructionsTextView);
+
+            List<Instruction> instructions = new ArrayList<>();
+//            instructions.add(new Instruction(input1, "Enter the first number here"));
+//            instructions.add(new Instruction(input2, "Enter the second number here"));
+            instructions.add(new Instruction(bAdd, "Tap here to add numbers"));
+            instructions.add(new Instruction(bSub, "Tap here to substract numbers"));
+            instructions.add(new Instruction(bMul, "Tap here to multiply numbers"));
+            instructions.add(new Instruction(bDiv, "Tap here to divide numbers"));
+            instructions.add(new Instruction(bDel, "Long press here to delete numbers"));
+            instructions.add(new Instruction(bAllClear, "Tap here to clear all numbers"));
+            instructions.add(new Instruction(bNeg, "Tap here to enter a negative sign"));
+            instructions.add(new Instruction(bDown, "Tap here to move focus to the other input field\n(Down Arrow)"));
+            instructions.add(new Instruction(bFlip, "Tap here to swap the numbers"));
+
+            final int[] currentInstructionIndex = {0};
+
+            Instruction firstInstruction = instructions.get(0);
+            root.post(() -> {
+                instructionsTextView.setText(firstInstruction.text);
+                highlightView(overlay, firstInstruction.view);
+                positionInstructionText(root, instructionsTextView, firstInstruction.view);
+            });
+
+            overlay.setOnClickListener(v -> {
+                currentInstructionIndex[0]++;
+                if (currentInstructionIndex[0] < instructions.size()) {
+                    Instruction currentInstruction = instructions.get(currentInstructionIndex[0]);
+                    root.post(() -> {
+                        instructionsTextView.setText(currentInstruction.text);
+                        highlightView(overlay, currentInstruction.view);
+                        positionInstructionText(root, instructionsTextView, currentInstruction.view);
+                    });
+                } else {
+                    ((ViewGroup) root.getParent()).removeView(root);
+                }
+            });
+        }
+    }
+
+    private void positionInstructionText(FrameLayout root, TextView instructionsTextView, View targetView) {
+        if (targetView == null) return;
+        root.post(() -> {
+            int[] location = new int[2];
+            targetView.getLocationOnScreen(location);
+            int x = location[0];
+            int y = location[1];
+            int width = targetView.getWidth();
+            int height = targetView.getHeight();
+
+            // Calculate position above the target
+            int targetCenterX = x + width / 2;
+            int instructionsTextViewWidth = instructionsTextView.getWidth();
+            int instructionsTextViewHeight = instructionsTextView.getHeight();
+            int newX = targetCenterX - instructionsTextViewWidth / 2;
+            int newY = y - instructionsTextViewHeight;
+
+            if (newX < 0) {
+                newX = 0;
+            } else if (newX + instructionsTextViewWidth > root.getWidth()) {
+                newX = root.getWidth() - instructionsTextViewWidth;
+            }
+
+            if (newY < 0) {
+                newY = y + height;
+                if (newY + instructionsTextViewHeight > root.getHeight()) {
+                    newY = y - instructionsTextViewHeight;
+                }
+            }
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.setMargins(newX, newY, 0, 0);
+            instructionsTextView.setLayoutParams(params);
+        });
+    }
+    private void highlightView(View overlay, View targetView) {
+        if (targetView == null) return;
+
+        overlay.post(() -> {
+            int[] location = new int[2];
+            targetView.getLocationOnScreen(location);
+            int x = location[0];
+            int y = location[1];
+            int width = targetView.getWidth();
+            int height = targetView.getHeight();
+
+            Bitmap bitmap = Bitmap.createBitmap(overlay.getWidth(), overlay.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            paint.setColor(0xDD000000);
+
+            canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), paint);
+
+            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+            canvas.drawRoundRect(new RectF(x, y, x + width, y + height), 20, 20, paint);
+            paint.setXfermode(null);
+
+            BitmapDrawable drawable = new BitmapDrawable(getResources(), bitmap);
+            overlay.setBackground(drawable);
+        });
+    }
+
+
 }
